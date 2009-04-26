@@ -24,7 +24,7 @@ class BinarySuite extends Suite with Checkers {
            suffix <- Arbitrary.arbitrary[Array[Byte]]) yield {
         val binaries = List(prefix) ++ (for (_ <- 0 until multiplier) yield { content }) ++ List(suffix)
         val combined = binaries.foldLeft(new Array[Byte](0))((a: Array[Byte], b: Array[Byte]) => a ++ b)
-        Binary.unsafe_wrapArray(combined, prefix.length, content.length * multiplier)
+        Binary.fromArray(combined, prefix.length, content.length * multiplier)
       }
 
     def genLeafBinary = Gen.frequency(

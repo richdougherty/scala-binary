@@ -18,15 +18,17 @@ import java.nio.charset._
  */
 object Binary {
 
+  private val _empty = fromArray(new Array[Byte](0))
+
   /**
    * Gets an empty Binary.
    */
-  def empty: Binary = new Binary(new LeafRope(new Array[Byte](0), 0, 0))
+  def empty: Binary = _empty
 
   /**
    * Creates a Binary containing the given bytes.
    */
-  def apply(bytes: Byte*): Binary = new Binary(Rope.unsafe_wrapArray(bytes.toArray))
+  def apply(bytes: Byte*): Binary = fromArray(bytes.toArray) // XXX: Could avoid copy?
 
   /**
    * Creates a Binary from a copy of the given sequence.
@@ -34,6 +36,7 @@ object Binary {
   def fromSeq(seq: Seq[Byte]): Binary = seq match {
     case binary: Binary => binary
     case array: Array[Byte] => fromArray(array)
+    case rope: Rope => new Binary(rope.copy)
     case _ => fromArray(seq.toArray)
   }
 
@@ -41,7 +44,7 @@ object Binary {
    * Creats a Binary from a copy of the given bytes.
    */
   def fromArray(array: Array[Byte]): Binary =
-    new Binary(Rope.fromArray(array, 0, array.length))
+    fromArray(array, 0, array.length)
   
   /**
    * Creates a Binary from a copy of a slice of the given bytes.
@@ -50,48 +53,34 @@ object Binary {
    * @param offset The first byte to include in the Binary.
    * @param length The length of the Binary.
    */
-  def fromArray(array: Array[Byte], offset: Int, length: Int): Binary =
-    new Binary(Rope.fromArray(array, offset, length))
+  def fromArray(array: Array[Byte], offset: Int, length: Int): Binary = {
+    val copy = new Array[Byte](length)
+    Array.copy(array, offset, copy, 0, length)
+    val rope = new LeafRope(copy, 0, length)
+    val binary = new Binary(rope)
+    binary
+  }
+
+  /**
+   * Creates a Binary from a copy of the given rope.
+   */
+  def fromRope(rope: Rope): Binary = new Binary(rope.copy)
   
-  /**
-   * UNSAFE: Creates a Binary by wrapping the given array.
-   *
-   * <p>This method exposes internal implementation details, allowing callers
-   * to violate the immutability of Binary objects. Nevertheless, it is made
-   * available to permit certain optimisations.
-   */
-  def unsafe_wrapArray(array: Array[Byte]): Binary =
-    new Binary(Rope.unsafe_wrapArray(array))
-
-  /**
-   * UNSAFE: Creates a Binary by wrapping the given array.
-   *
-   * <p>This method exposes internal implementation details, allowing callers
-   * to violate the immutability of Binary objects. Nevertheless, it is made
-   * available to permit certain optimisations.
-   * 
-   * @param array The bytes to create the Binary from.
-   * @param offset The first byte to include in the Binary.
-   * @param length The length of the Binary.
-   */
-  def unsafe_wrapArray(array: Array[Byte], offset: Int, length: Int): Binary =
-    new Binary(new LeafRope(array, offset, length))
-
   /**
    * Creates a Binary from a String, using the platform's default character
    * encoding.
    */
   def fromString(string: String): Binary =
-    new Binary(Rope.fromString(string))
+    new Binary(Rope.fromString(string).copy)
 
   /**
    * Creates a Binary from a String, using the given character encoding.
    */
   def fromString(string: String, charsetName: String): Binary =
-    new Binary(Rope.fromString(string, charsetName))
+    new Binary(Rope.fromString(string, charsetName).copy)
 
   def readFromInputStream(in: InputStream): Binary =
-    new Binary(Rope.readFromInputStream(in))
+    new Binary(Rope.readFromInputStream(in).copy)
 
   trait BinaryLike extends RandomAccessSeq[Byte] {
     def force: Binary
@@ -187,42 +176,6 @@ final class Binary private(private val rope: Rope) extends RandomAccessSeq[Byte]
   def toArray: Array[Byte] = rope.toArray
 
   /**
-   * Gets the ArrayBinary leaves of this Binary in a given range.
-   *
-   * <p>This method exposes internal implementation details of Binary objects,
-   * and so is only made available to the 'scala' package, in order to permit
-   * certain optimisations.
-   */
-  final def unsafe_arrays(from: Int, until: Int): Iterable[Binary] =
-    for (leaf <- rope.unsafe_arrays) yield { new Binary(leaf) }
-
-  /**
-   * Gets all the ArrayBinary leaves of this Binary.
-   *
-   * <p>This method exposes internal implementation details of Binary objects,
-   * and so is only made available to the 'scala' package, in order to permit
-   * certain optimisations.
-   */
-  final def unsafe_arrays: Iterable[Binary] =
-    unsafe_arrays(0, length)
-
-  /**
-   * UNSAFE: Get a list of ByteBuffers containing this object's
-   * content. It is important not to modify the content of any buffer,
-   * as this will alter the content of this Binary - which must not
-   * happen.
-   *
-   * <p>This method exposes internal implementation details, allowing callers
-   * to violate the immutability of Binary objects. Nevertheless, it is made
-   * available to the 'scala' package to permit certain optimisations.
-   */
-  final def unsafe_byteBuffers(from: Int, until: Int): Iterable[ByteBuffer] =
-    rope.unsafe_byteBuffers(from, until)
-
-  final def unsafe_byteBuffers: Iterable[ByteBuffer] =
-    rope.unsafe_byteBuffers
-
-  /**
    * Get a textual representation of this object.
    */
   override def toString = {
@@ -263,7 +216,7 @@ final class Binary private(private val rope: Rope) extends RandomAccessSeq[Byte]
    * @throws java.nio.charset.UnmappableCharacterException If the output cannot be represented in the charset.
    */
   def decodeString(charsetName: String): String =
-    rope.decodeString(charsetName)
+    rope.copy.decodeString(charsetName)
 
   /**
    * Decodes the Binary into a String using the given decoder and output buffer.
@@ -272,7 +225,7 @@ final class Binary private(private val rope: Rope) extends RandomAccessSeq[Byte]
    * error causing failure.
    */
   def decodeStringWith(decoder: CharsetDecoder, charBuffer: CharBuffer): Option[CoderResult] =
-    rope.decodeStringWith(decoder, charBuffer)
+    rope.copy.decodeStringWith(decoder, charBuffer)
 
   /**
    * Gets a big-endian-encoded Long from the given index.
@@ -283,6 +236,6 @@ final class Binary private(private val rope: Rope) extends RandomAccessSeq[Byte]
   // TODO: Write more conversion functions...
 
   def writeToOutputStream(out: OutputStream) =
-    rope.writeToOutputStream(out)
+    rope.copy.writeToOutputStream(out)
 
 }

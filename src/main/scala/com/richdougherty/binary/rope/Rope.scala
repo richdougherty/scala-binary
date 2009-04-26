@@ -300,7 +300,8 @@ trait Rope extends RandomAccessSeq[Byte] with Rope.RopeLike with Serializable {
   protected def forcedSlice0(from: Int, until: Int): Rope
 
   /**
-   * Copy this object's bytes into a given array.
+   * Copy this object's bytes into a given array. This method will
+   * always return an unaliased copy of the rope's bytes.
    */
   final def copyToArray(from: Int, until: Int, dest: Array[Byte], destFrom: Int): Unit = {
     if (from < 0 || until > length) throw new IndexOutOfBoundsException
@@ -316,13 +317,20 @@ trait Rope extends RandomAccessSeq[Byte] with Rope.RopeLike with Serializable {
   protected def copyToArray0(from: Int, until: Int, dest: Array[Byte], destFrom: Int): Unit
 
   /**
-   * Get a copy of this object's bytes, stored in an array.
+   * Get a copy of this object's bytes, stored in an array.  This
+   * method will always return an unaliased copy of the rope's bytes.
    */
-  def toArray: Array[Byte] = {
+  final def toArray: Array[Byte] = {
     val array = new Array[Byte](length)
     copyToArray(0, length, array, 0)
     array
   }
+
+  /**
+   * Get a copy of this object's bytes, stored in a wrope.  This
+   * method will always return an unaliased copy of the rope's bytes.
+   */
+  final def copy: Rope = Rope.unsafe_wrapArray(toArray)
 
   /**
    * Gets the LeafRope leaves of this Rope in a given range.
