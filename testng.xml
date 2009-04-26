@@ -5,6 +5,7 @@
     <classes>
       <class name="com.richdougherty.binary.BinarySuite" />
       <class name="com.richdougherty.binary.PicklingSuite" />
+      <class name="com.richdougherty.binary.rope.RopeSuite" />
     </classes>
   </test>
 </suite>
