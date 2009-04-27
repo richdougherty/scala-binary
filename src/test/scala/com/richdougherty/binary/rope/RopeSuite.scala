@@ -31,7 +31,7 @@ class RopeSuite extends Suite with Checkers {
       (1, Gen.value(Rope.empty)),
       (8, genLeafRopeMul(1)),
       (3, genLeafRopeMul(10)),
-      (2, genLeafRopeMul(100)),
+      (2, genLeafRopeMul(100))
     )
 
     def genRope(maxDepth: Int): Gen[Rope] = {
@@ -65,7 +65,7 @@ class RopeSuite extends Suite with Checkers {
   // Workaround for bug #1309.
   def fixRAS(any: Any) = any match {
     case a: Array[Byte] => a
-    case ras: RandomAccessSeq[Byte] => ras
+    case ras: RandomAccessSeq[_] => ras.asInstanceOf[RandomAccessSeq[Byte]]
   }
 
   def same(aThunk: => RandomAccessSeq[Byte], bThunk: => RandomAccessSeq[Byte]): Boolean = {

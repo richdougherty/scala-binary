@@ -45,8 +45,8 @@ class PicklingSuite extends Suite with StandardPickling with Checkers {
     checkBipickle[Byte]
     checkBipickle[String]
     checkBipickle[Boolean]
-    bipickle((1,))
-    bipickle(("abc",))
+    bipickle(Tuple1(1))
+    bipickle(Tuple1("abc"))
     checkBipickle[Tuple2[String,Char]]
     checkBipickle[Tuple2[List[Byte],Byte]]
     checkBipickle[Tuple3[Int,Int,Int]]

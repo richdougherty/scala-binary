@@ -31,7 +31,7 @@ class BinarySuite extends Suite with Checkers {
       (1, Gen.value(Binary.empty)),
       (8, genArrayBinary(1)),
       (3, genArrayBinary(10)),
-      (2, genArrayBinary(100)),
+      (2, genArrayBinary(100))
     )
 
     def genBinary(maxDepth: Int): Gen[Binary] = {
@@ -65,7 +65,7 @@ class BinarySuite extends Suite with Checkers {
   // Workaround for bug #1309.
   def fixRAS(any: Any) = any match {
     case a: Array[Byte] => a
-    case ras: RandomAccessSeq[Byte] => ras
+    case ras: RandomAccessSeq[_] => ras.asInstanceOf[RandomAccessSeq[Byte]]
   }
 
   def same(aThunk: => RandomAccessSeq[Byte], bThunk: => RandomAccessSeq[Byte]): Boolean = {
