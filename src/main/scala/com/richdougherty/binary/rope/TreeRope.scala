@@ -1,11 +1,5 @@
 package com.richdougherty.binary.rope
 
-import java.io.IOException
-import java.io.ObjectInputStream
-import java.io.ObjectOutputStream
-import java.io.Serializable
-import java.nio.ByteBuffer
-
 import java.nio.ByteBuffer
 
 private[binary] object TreeRope {
@@ -34,9 +28,7 @@ private[binary] object TreeRope {
  *
  * @author <a href="http://www.richdougherty.com/">Rich Dougherty</a>
  */
-@serializable
-@SerialVersionUID(-8314444781809819098L)
-private[binary] final case class TreeRope private[binary] (private var left: Rope, private val right: Rope) extends Rope with Serializable {
+final case class TreeRope(val left: Rope, val right: Rope) extends Rope {
 
   override val length = left.length + right.length
 
@@ -132,31 +124,5 @@ private[binary] final case class TreeRope private[binary] (private var left: Rop
   }
 
   override def elements: Iterator[Byte] = (left.elements ++ right.elements)
-
-  private def writeObject(out: ObjectOutputStream): Unit = {
-    out.writeInt(length)
-    for (arrayRope <- unsafe_arrays) {
-      out.write(arrayRope.array, arrayRope.offset, arrayRope.length)
-    }
-  }
-
-  private def readObject(in: ObjectInputStream): Unit = {
-    // Read into left so it can be used as the replacement object.
-    // See readResolve.
-    val offset = 0
-    val length = in.readInt()
-    val array = new Array[Byte](length)
-    var remaining = length
-    while (remaining > 0) {
-      val readLength = in.read(array, length - remaining, remaining)
-      if (readLength == -1) {
-        throw new IOException("Expected " + remaining + " more bytes.")
-      }
-      remaining -= readLength
-    }
-    left = new LeafRope(array, 0, length)
-  }
-  
-  private def readResolve: AnyRef = left
 
 }

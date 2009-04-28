@@ -198,12 +198,4 @@ class RopeSuite extends Suite with Checkers {
     assert(Rope.fromString("hello world").decodeString("UTF8") == ("hello world"))
   }
 
-  @Test
-  def testSerialization = {
-    check{(bin: Rope) =>
-      val cloned = org.apache.commons.lang.SerializationUtils.clone(bin).asInstanceOf[Rope]
-      bin == cloned
-    }
-  }
-
 }

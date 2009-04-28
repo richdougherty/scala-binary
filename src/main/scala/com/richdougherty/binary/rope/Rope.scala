@@ -158,8 +158,7 @@ object Rope {
  *
  * @see http://www.cs.ubc.ca/local/reading/proceedings/spe91-95/spe/vol25/issue12/spe986.pdf
  */
-@serializable
-trait Rope extends RandomAccessSeq[Byte] with Rope.RopeLike with Serializable {
+trait Rope extends RandomAccessSeq[Byte] with Rope.RopeLike {
 
   /**
    * The length of the Rope in bytes.

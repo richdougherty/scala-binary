@@ -1,11 +1,7 @@
 package com.richdougherty.binary
 
 import com.richdougherty.binary.rope._
-import java.io.InputStream
-import java.io.ObjectInput
-import java.io.ObjectOutput
-import java.io.OutputStream
-import java.io.Serializable
+import java.io._
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
 import java.nio.charset._
@@ -117,8 +113,10 @@ object Binary {
  * @see http://www.cs.ubc.ca/local/reading/proceedings/spe91-95/spe/vol25/issue12/spe986.pdf
  */
 @serializable
-final class Binary private(private val rope: Rope) extends RandomAccessSeq[Byte] with Binary.BinaryLike with Serializable {
-
+@SerialVersionUID(-8314444781809819999L)
+final class Binary private(private var rope: Rope) extends RandomAccessSeq[Byte] with Binary.BinaryLike with Serializable {
+  // rope is var rather than val, to allow deserialization to work
+  
   def apply(i: Int) = rope(i)
 
   /**
@@ -237,5 +235,27 @@ final class Binary private(private val rope: Rope) extends RandomAccessSeq[Byte]
 
   def writeToOutputStream(out: OutputStream) =
     rope.copy.writeToOutputStream(out)
+  
+  private def writeObject(out: ObjectOutputStream): Unit = {
+    out.writeInt(length)
+    for (arrayRope <- rope.unsafe_arrays) {
+      out.write(arrayRope.array, arrayRope.offset, arrayRope.length)
+    }
+  }
+
+  private def readObject(in: ObjectInputStream): Unit = {
+    val offset = 0
+    val length = in.readInt()
+    val array = new Array[Byte](length)
+    var remaining = length
+    while (remaining > 0) {
+      val readLength = in.read(array, length - remaining, remaining)
+      if (readLength == -1) {
+        throw new IOException("Expected " + remaining + " more bytes.")
+      }
+      remaining -= readLength
+    }
+    rope = new LeafRope(array, 0, length)
+  }
 
 }
